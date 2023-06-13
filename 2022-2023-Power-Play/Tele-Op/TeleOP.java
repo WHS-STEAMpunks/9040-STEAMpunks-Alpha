@@ -3,12 +3,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 //Assigns the name for this code that will appear in the driver hub
-@TeleOp(name = "Manual")
+@TeleOp(name = "DriverV2")
 
-public class TeleOP extends LinearOpMode {
+public class TeleOPtest extends LinearOpMode {
 
     //Declares all DcMotors and Servos
     private DcMotorEx frontleft, backright, backleft, frontright;
@@ -24,6 +25,13 @@ public class TeleOP extends LinearOpMode {
         backright.setPower(BackRight);
         frontright.setPower(FrontRight);
     }
+    public void setMotorsPower(double pow){
+        frontleft.setPower(pow);
+        backleft.setPower(pow);
+        backright.setPower(pow);
+        frontright.setPower(pow);
+    }
+
 
     //Essentially the main method for the class
     @Override
@@ -35,13 +43,15 @@ public class TeleOP extends LinearOpMode {
         backright = hardwareMap.get(DcMotorEx.class, "back right");
         frontright = hardwareMap.get(DcMotorEx.class, "front right");
 
-
+        //creates a new ElapsedTime object for the timer
         timer = new ElapsedTime();
+
+        boolean speedMode = true;
+        double pow;
 
         waitForStart();
 
         boolean forward, backward, left, right, strafeLeft, strafeRight, turnLeft180, turnRight180, slowMode, stop;
-        double pow = 0.47;
 
         while (opModeIsActive()) {
 
@@ -58,41 +68,45 @@ public class TeleOP extends LinearOpMode {
             stop = gamepad1.y;
 
             //Changes the speed of the movement
-            pow = 0.47;
-            if(slowMode) pow = 0.35;
+            if (speedMode) {
+                pow = 0.47;
+            } else if (slowMode) {
+                pow = 0.35;
+            } else {
+                pow = 0.47;
+            }
 
-            //Drivetrain movements
             //--------------------------------------------------------------------StopBot
             if (stop) {
-                setMotorsPower(0, 0, 0, 0);
+                setMotorsPower(0);
             }
             //--------------------------------------------------------------------DiagonalLeftForward
             else if (forward && strafeLeft) {
-                setMotorsPower(pow, pow, pow, pow);
+                setMotorsPower(pow);
                 setMotorsPower(pow, -pow, pow, -pow);
             }
             //--------------------------------------------------------------------DiagonalRightForward
             else if (forward && strafeRight) {
-                setMotorsPower(pow, pow, pow, pow);
+                setMotorsPower(pow);
                 setMotorsPower(-pow, pow, -pow, pow);
             }
             //--------------------------------------------------------------------DiagonalLeftBackward
             else if (backward && strafeLeft) {
-                setMotorsPower(-pow, -pow, -pow, -pow);
+                setMotorsPower(-pow);
                 setMotorsPower(pow, -pow, pow, -pow);
             }
             //--------------------------------------------------------------------DiagonalRightForward
             else if (backward && strafeRight) {
-                setMotorsPower(-pow, -pow, -pow, -pow);
+                setMotorsPower(-pow);
                 setMotorsPower(-pow, pow, -pow, pow);
             }
             //--------------------------------------------------------------------Forward
             else if (forward) {
-                setMotorsPower(pow, pow, pow, pow);
+                setMotorsPower(pow);
             }
             //--------------------------------------------------------------------Backward
             else if (backward) {
-                setMotorsPower(-pow, -pow, -pow, -pow);
+                setMotorsPower(-pow);
             }
             //--------------------------------------------------------------------Left
             else if (left) {
@@ -116,7 +130,8 @@ public class TeleOP extends LinearOpMode {
                 while (timer.milliseconds() < 600) {
                     setMotorsPower(-1, -1, 1, 1);
                 }
-                setMotorsPower(0, 0, 0, 0);
+                setMotorsPower(0);
+                speedMode = true;
             }
             //--------------------------------------------------------------------TurnRight180
             else if (turnRight180) {
@@ -124,22 +139,19 @@ public class TeleOP extends LinearOpMode {
                 while (timer.milliseconds() < 600) {
                     setMotorsPower(1, 1, -1, -1);
                 }
-                setMotorsPower(0, 0, 0, 0);
+                setMotorsPower( 0);
+                speedMode = true;
             }
             //--------------------------------------------------------------------Decelerate
             else {
-                while (backleft.getVelocity() > 0.5 &&
-                        frontleft.getVelocity() > 0.5 &&
-                        backright.getVelocity() > 0.5 &&
-                        frontright.getVelocity() > 0.5)
-                {
+                while (backleft.getVelocity() > 0.5) {
                     double state = Math.tanh(0.32 + 0.05 * backleft.getVelocity());
                     backleft.setVelocity(state);
                     backright.setVelocity(state);
                     frontleft.setVelocity(state);
                     frontright.setVelocity(state);
                 }
-                setMotorsPower(0, 0, 0, 0);
+                setMotorsPower(0);
             }
 
             telemetry.update();
