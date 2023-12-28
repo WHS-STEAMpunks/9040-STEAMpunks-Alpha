@@ -10,3 +10,10 @@ NoelleSaidJerry.java
  - Outtake has one slide to lift the box, one servo to rotate the box, and one servo to open/close the box
  - Hanging done with a DC motor-driven linear actuator
  - Paper airplane launched by a servo
+
+LethalCompanyIRL.java
+ - Used for Meet 2
+ - Outtake has one slide to lift the box, one servo to rotate the box, and one servo to open/close the box
+ - Hanging done with a DC motor-driven linear actuator
+ - Paper airplane launched by a servo
+ - Controls are adjusted
