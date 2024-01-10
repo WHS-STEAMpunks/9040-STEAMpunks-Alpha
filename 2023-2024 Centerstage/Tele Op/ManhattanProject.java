@@ -217,12 +217,10 @@ public class ManhattanProject extends LinearOpMode
 
             if (quickClockwise)
             {
-                resetAngle();
                 autoDriveState = AutoDriveState.QUICK_CLOCKWISE;
             }
             else if (quickCounterClockwise)
             {
-                resetAngle();
                 autoDriveState = AutoDriveState.QUICK_COUNTERCLOCKWISE;
             }
 
