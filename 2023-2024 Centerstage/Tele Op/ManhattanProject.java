@@ -105,7 +105,7 @@ public class ManhattanProject extends LinearOpMode
         DIAGONAL45, DIAGONAL135, DIAGONAL225, DIAGONAL315, COUNTERCLOCKWISE, CLOCKWISE;
     }
     private DriveState driveState;
-    private enum AutoDriveState {INITIAL, QUICK_TURN_LEFT, QUICK_TURN_RIGHT;}
+    private enum AutoDriveState {INITIAL, QUICK_CLOCKWISE, QUICK_COUNTERCLOCKWISE;}
     private AutoDriveState autoDriveState;
     private enum ArmState {INTAKE, TO_OUTTAKE, OUTTAKE, TO_AIRPLANE, AIRPLANE, TO_INTAKE;}
     private ArmState armState;
@@ -121,7 +121,7 @@ public class ManhattanProject extends LinearOpMode
     // Controls
     private boolean forward, backward, left, right, slowForward, slowBackward, slowLeft, slowRight;
     private boolean diagonal45, diagonal135, diagonal225, diagonal315;
-    private boolean counterClockwise, clockwise, quickTurnLeft, quickTurnRight, stopDrive;
+    private boolean counterClockwise, clockwise, quickClockwise, quickCounterClockwise, stopDrive;
     private boolean launchAirplane, launchHanging, hangUp, hangDown, slidesDown, slideStop;
     private boolean slidesUpLow, slidesUpMid, slidesUpHigh, slidesUpManual, slidesDownManual, slideTouchingSensor;
     private boolean openLeftClaw, closeLeftClaw, openRightClaw, closeRightClaw, armToOuttake, armToIntake, armToAirplane;
@@ -140,16 +140,17 @@ public class ManhattanProject extends LinearOpMode
         while (opModeIsActive())
         {
             //Conditions for Controller1/Gamepad1 controls
-            diagonal45 = gamepad1.left_stick_y > 0.25 && gamepad1.right_stick_x > 0.25;
-            diagonal135 = gamepad1.left_stick_y > 0.25 && gamepad1.right_stick_x < -0.25;
-            diagonal225 = gamepad1.left_stick_y < -0.25 && gamepad1.right_stick_x < -0.25;
-            diagonal315 = gamepad1.left_stick_y < -0.2 && gamepad1.right_stick_x > 0.25;
-            if (!(diagonal45 || diagonal135 || diagonal225 || diagonal315))
+            forward = gamepad1.left_stick_y > 0.25;
+            backward = gamepad1.left_stick_y < -0.25;
+            left = gamepad1.left_stick_x < -0.25;
+            right = gamepad1.left_stick_x > 0.25;
+
+            if (!(forward || backward || left || right))
             {
-                forward = gamepad1.left_stick_y > 0.25;
-                backward = gamepad1.left_stick_y < -0.25;
-                left = gamepad1.left_stick_x < -0.25;
-                right = gamepad1.left_stick_x > 0.25;
+                diagonal45 = gamepad1.right_stick_y > 0.25 && gamepad1.right_stick_x > 0.25;
+                diagonal135 = gamepad1.right_stick_y > 0.25 && gamepad1.right_stick_x < -0.25;
+                diagonal225 = gamepad1.right_stick_y < -0.25 && gamepad1.right_stick_x < -0.25;
+                diagonal315 = gamepad1.right_stick_y < -0.2 && gamepad1.right_stick_x > 0.25;
             }
             slowForward = gamepad1.dpad_up;
             slowBackward = gamepad1.dpad_down;
@@ -157,8 +158,8 @@ public class ManhattanProject extends LinearOpMode
             slowRight = gamepad1.dpad_right;
             counterClockwise = gamepad1.left_bumper;
             clockwise = gamepad1.right_bumper;
-            quickTurnLeft = gamepad1.left_stick_button;
-            quickTurnRight = gamepad1.right_stick_button;
+            quickClockwise = gamepad1.left_stick_button;
+            quickCounterClockwise = gamepad1.right_stick_button;
             stopDrive = gamepad1.left_trigger > 0.25;
             launchAirplane = gamepad1.x;
             launchHanging = gamepad1.b;
@@ -214,8 +215,16 @@ public class ManhattanProject extends LinearOpMode
             else if (clockwise) {driveState = DriveState.CLOCKWISE;}
             else {driveState = DriveState.STATIONARY;}
 
-            if (quickTurnLeft) {autoDriveState = AutoDriveState.QUICK_TURN_LEFT;}
-            else if (quickTurnRight) {autoDriveState = AutoDriveState.QUICK_TURN_RIGHT;}
+            if (quickClockwise)
+            {
+                resetAngle();
+                autoDriveState = AutoDriveState.QUICK_CLOCKWISE;
+            }
+            else if (quickCounterClockwise)
+            {
+                resetAngle();
+                autoDriveState = AutoDriveState.QUICK_COUNTERCLOCKWISE;
+            }
 
             triggerActions();
         }
@@ -359,13 +368,13 @@ public class ManhattanProject extends LinearOpMode
 
     public void resetAngle()
     {
-        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZXY, AngleUnit.DEGREES);
+        lastAngles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XZY, AngleUnit.DEGREES);
         currentAngle = 0.0;
     }
 
     public double getAngle()
     {
-        Orientation orientation = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZXY, AngleUnit.DEGREES);
+        Orientation orientation = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XZY, AngleUnit.DEGREES);
         double deltaTheta = orientation.firstAngle - lastAngles.firstAngle;
         if (deltaTheta > 180) {deltaTheta -= 360;}
         else if (deltaTheta <= -180) {deltaTheta += 360;}
@@ -396,18 +405,18 @@ public class ManhattanProject extends LinearOpMode
             else if (driveState == DriveState.CLOCKWISE) {power(pow, -1*pow, pow, -1*pow);}
             else if (driveState == DriveState.COUNTERCLOCKWISE) {power(-1*pow, pow, -1*pow, pow);}
         }
-        else if (autoDriveState == AutoDriveState.QUICK_TURN_LEFT)
+        else if (autoDriveState == AutoDriveState.QUICK_CLOCKWISE)
         {
-            if (QUICK_TURN_ANGLE - getAngle() > 3 && !(stopDrive)) {power(1, -1, 1, -1);}
+            if (Math.abs(QUICK_TURN_ANGLE - getAngle()) > 3 && !(stopDrive)) {power(1, -1, 1, -1);}
             else
             {
                 power(0);
                 autoDriveState = AutoDriveState.INITIAL;
             }
         }
-        else if (autoDriveState == AutoDriveState.QUICK_TURN_RIGHT)
+        else if (autoDriveState == AutoDriveState.QUICK_COUNTERCLOCKWISE)
         {
-            if (QUICK_TURN_ANGLE - getAngle() > 3 && !(stopDrive)) {power(-1, 1, -1, 1);}
+            if (Math.abs(QUICK_TURN_ANGLE - getAngle()) > 3 && !(stopDrive)) {power(-1, 1, -1, 1);}
             else
             {
                 power(0);
